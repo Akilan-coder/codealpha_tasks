@@ -1,1 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fitness Tracking App</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, sans-serif;
+    }
+
+    body{
+      background:#f4f7fb;
+      padding:20px;
+      color:#333;
+    }
+
+    .container{
+      max-width:1000px;
+      margin:auto;
+    }
+
+    h1{
+      text-align:center;
+      margin-bottom:25px;
+      color:#222;
+    }
+
+    .dashboard{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
+      margin-bottom:30px;
+    }
+
+    .card{
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .card h2{
+      font-size:18px;
+      margin-bottom:10px;
+    }
+
+    .value{
+      font-size:30px;
+      font-weight:bold;
+      color:#007bff;
+    }
+
+    .progress-container{
+      margin-top:10px;
+    }
+
+    .progress-bar{
+      width:100%;
+      background:#ddd;
+      border-radius:20px;
+      overflow:hidden;
+      height:14px;
+    }
+
+    .progress{
+      height:100%;
+      background:#28a745;
+      width:0%;
+      transition:0.5s;
+    }
+
+    .form-section{
+      background:#fff;
+      padding:25px;
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom:30px;
+    }
+
+    .form-section h2{
+      margin-bottom:15px;
+    }
+
+    .form-group{
+      margin-bottom:15px;
+    }
+
+    label{
+      display:block;
+      margin-bottom:5px;
+      font-weight:bold;
+    }
+
+    input, select{
+      width:100%;
+      padding:10px;
+      border:1px solid #ccc;
+      border-radius:6px;
+    }
+
+    button{
+      background:#007bff;
+      color:white;
+      border:none;
+      padding:12px 20px;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:16px;
+    }
+
+    button:hover{
+      opacity:0.9;
+    }
+
+    .history{
+      background:#fff;
+      padding:25px;
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:15px;
+    }
+
+    table th, table td{
+      padding:12px;
+      border-bottom:1px solid #ddd;
+      text-align:center;
+    }
+
+    canvas{
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom:30px;
+    }
+
+    @media(max-width:600px){
+      .value{
+        font-size:24px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Fitness Tracking App</h1>
+
+  <!-- Dashboard -->
+  <div class="dashboard">
+
+    <div class="card">
+      <h2>Steps</h2>
+      <div class="value" id="stepsValue">0</div>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress" id="stepsProgress"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Calories Burned</h2>
+      <div class="value" id="caloriesValue">0</div>
+    </div>
+
+    <div class="card">
+      <h2>Workout Minutes</h2>
+      <div class="value" id="workoutValue">0</div>
+    </div>
+
+  </div>
+
+  <!-- Chart -->
+  <canvas id="fitnessChart"></canvas>
+
+  <!-- Form -->
+  <div class="form-section">
+
+    <h2>Log Fitness Activity</h2>
+
+    <div class="form-group">
+      <label>Exercise Type</label>
+      <select id="exerciseType">
+        <option>Walking</option>
+        <option>Running</option>
+        <option>Cycling</option>
+        <option>Gym Workout</option>
+        <option>Yoga</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Steps</label>
+      <input type="number" id="stepsInput" placeholder="Enter steps">
+    </div>
+
+    <div class="form-group">
+      <label>Workout Time (Minutes)</label>
+      <input type="number" id="workoutInput" placeholder="Enter workout time">
+    </div>
+
+    <div class="form-group">
+      <label>Calories Burned</label>
+      <input type="number" id="caloriesInput" placeholder="Enter calories burned">
+    </div>
+
+    <button onclick="addFitnessData()">Save Activity</button>
+
+  </div>
+
+  <!-- History -->
+  <div class="history">
+
+    <h2>Activity History</h2>
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Exercise</th>
+          <th>Steps</th>
+          <th>Workout Time</th>
+          <th>Calories</th>
+        </tr>
+      </thead>
+
+      <tbody id="historyTable"></tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<script>
+
+  let fitnessData = JSON.parse(localStorage.getItem("fitnessData")) || [];
+
+  function updateDashboard(){
+
+    let totalSteps = 0;
+    let totalCalories = 0;
+    let totalWorkout = 0;
+
+    fitnessData.forEach(data => {
+      totalSteps += Number(data.steps);
+      totalCalories += Number(data.calories);
+      totalWorkout += Number(data.workout);
+    });
+
+    document.getElementById("stepsValue").innerText = totalSteps;
+    document.getElementById("caloriesValue").innerText = totalCalories;
+    document.getElementById("workoutValue").innerText = totalWorkout;
+
+    let goal = 10000;
+    let progress = (totalSteps / goal) * 100;
+
+    if(progress > 100){
+      progress = 100;
+    }
+
+    document.getElementById("stepsProgress").style.width =
+      progress + "%";
+
+    renderTable();
+    renderChart();
+  }
+
+  function addFitnessData(){
+
+    let exercise =
+      document.getElementById("exerciseType").value;
+
+    let steps =
+      document.getElementById("stepsInput").value;
+
+    let workout =
+      document.getElementById("workoutInput").value;
+
+    let calories =
+      document.getElementById("caloriesInput").value;
+
+    if(steps === "" || workout === "" || calories === ""){
+      alert("Please fill all fields");
+      return;
+    }
+
+    let newData = {
+      exercise,
+      steps,
+      workout,
+      calories
+    };
+
+    fitnessData.push(newData);
+
+    localStorage.setItem(
+      "fitnessData",
+      JSON.stringify(fitnessData)
+    );
+
+    document.getElementById("stepsInput").value = "";
+    document.getElementById("workoutInput").value = "";
+    document.getElementById("caloriesInput").value = "";
+
+    updateDashboard();
+  }
+
+  function renderTable(){
+
+    let table =
+      document.getElementById("historyTable");
+
+    table.innerHTML = "";
+
+    fitnessData.forEach(data => {
+
+      let row = `
+        <tr>
+          <td>${data.exercise}</td>
+          <td>${data.steps}</td>
+          <td>${data.workout} min</td>
+          <td>${data.calories}</td>
+        </tr>
+      `;
+
+      table.innerHTML += row;
+    });
+  }
+
+  let chart;
+
+  function renderChart(){
+
+    let ctx =
+      document.getElementById("fitnessChart");
+
+    let labels = fitnessData.map(
+      (data, index) => "Day " + (index + 1)
+    );
+
+    let calories = fitnessData.map(
+      data => data.calories
+    );
+
+    if(chart){
+      chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Calories Burned',
+          data: calories,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+  }
+
+  updateDashboard();
+
+</script>
+
+</body>
+</html>
