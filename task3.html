@@ -1,1 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Language Learning App</title>
 
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, sans-serif;
+    }
+
+    body{
+      background:#f4f6fb;
+      color:#333;
+      padding:20px;
+    }
+
+    .container{
+      max-width:1000px;
+      margin:auto;
+    }
+
+    h1{
+      text-align:center;
+      margin-bottom:25px;
+      color:#222;
+    }
+
+    .top-bar{
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:15px;
+      margin-bottom:25px;
+    }
+
+    .card{
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom:25px;
+    }
+
+    .categories{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .category-btn{
+      background:#007bff;
+      color:white;
+      border:none;
+      padding:10px 15px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+
+    .flashcard{
+      text-align:center;
+      padding:40px 20px;
+      min-height:220px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .word{
+      font-size:32px;
+      font-weight:bold;
+      margin-bottom:15px;
+      color:#222;
+    }
+
+    .translation{
+      font-size:24px;
+      color:#555;
+      display:none;
+      margin-bottom:10px;
+    }
+
+    .pronunciation{
+      font-size:18px;
+      color:#777;
+      display:none;
+    }
+
+    .buttons{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top:20px;
+    }
+
+    button{
+      padding:12px 18px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:15px;
+    }
+
+    .primary{
+      background:#007bff;
+      color:white;
+    }
+
+    .success{
+      background:#28a745;
+      color:white;
+    }
+
+    .warning{
+      background:#ffc107;
+      color:black;
+    }
+
+    .quiz-question{
+      font-size:22px;
+      margin-bottom:20px;
+    }
+
+    .option{
+      width:100%;
+      margin-bottom:10px;
+      background:#e9ecef;
+      color:#333;
+    }
+
+    .score{
+      margin-top:15px;
+      font-weight:bold;
+      font-size:18px;
+      color:#28a745;
+    }
+
+    .progress-bar{
+      width:100%;
+      height:18px;
+      background:#ddd;
+      border-radius:20px;
+      overflow:hidden;
+      margin-top:10px;
+    }
+
+    .progress{
+      height:100%;
+      width:0%;
+      background:#28a745;
+      transition:0.5s;
+    }
+
+    @media(max-width:600px){
+      .word{
+        font-size:24px;
+      }
+
+      .translation{
+        font-size:20px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Language Learning App</h1>
+
+  <!-- Categories -->
+  <div class="card">
+
+    <h2>Categories</h2>
+
+    <div class="categories">
+      <button class="category-btn">Vocabulary</button>
+      <button class="category-btn">Grammar</button>
+      <button class="category-btn">Phrases</button>
+      <button class="category-btn">Daily Conversation</button>
+    </div>
+
+  </div>
+
+  <!-- Flashcard Section -->
+  <div class="card flashcard">
+
+    <div class="word" id="word"></div>
+
+    <div class="translation" id="translation"></div>
+
+    <div class="pronunciation" id="pronunciation"></div>
+
+    <div class="buttons">
+      <button class="primary" onclick="showAnswer()">
+        Show Translation
+      </button>
+
+      <button class="success" onclick="previousCard()">
+        Previous
+      </button>
+
+      <button class="success" onclick="nextCard()">
+        Next
+      </button>
+
+      <button class="warning" onclick="speakWord()">
+        Pronounce
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Quiz Section -->
+  <div class="card">
+
+    <h2>Practice Quiz</h2>
+
+    <div class="quiz-question" id="quizQuestion"></div>
+
+    <div id="quizOptions"></div>
+
+    <div class="score" id="score"></div>
+
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+  // Flashcard Data
+  const flashcards = [
+    {
+      word: "Hola",
+      translation: "Hello",
+      pronunciation: "oh-la"
+    },
+    {
+      word: "Gracias",
+      translation: "Thank You",
+      pronunciation: "gra-see-as"
+    },
+    {
+      word: "Buenos días",
+      translation: "Good Morning",
+      pronunciation: "bway-nos dee-as"
+    },
+    {
+      word: "Adiós",
+      translation: "Goodbye",
+      pronunciation: "ah-dee-os"
+    }
+  ];
+
+  let currentCard = 0;
+
+  function displayCard(){
+
+    document.getElementById("word").innerText =
+      flashcards[currentCard].word;
+
+    document.getElementById("translation").innerText =
+      flashcards[currentCard].translation;
+
+    document.getElementById("pronunciation").innerText =
+      "Pronunciation: " +
+      flashcards[currentCard].pronunciation;
+
+    document.getElementById("translation").style.display =
+      "none";
+
+    document.getElementById("pronunciation").style.display =
+      "none";
+  }
+
+  function showAnswer(){
+
+    document.getElementById("translation").style.display =
+      "block";
+
+    document.getElementById("pronunciation").style.display =
+      "block";
+  }
+
+  function nextCard(){
+
+    currentCard++;
+
+    if(currentCard >= flashcards.length){
+      currentCard = 0;
+    }
+
+    displayCard();
+  }
+
+  function previousCard(){
+
+    currentCard--;
+
+    if(currentCard < 0){
+      currentCard = flashcards.length - 1;
+    }
+
+    displayCard();
+  }
+
+  // Pronunciation
+  function speakWord(){
+
+    let speech = new SpeechSynthesisUtterance(
+      flashcards[currentCard].word
+    );
+
+    speech.lang = "es-ES";
+
+    speechSynthesis.speak(speech);
+  }
+
+  // Quiz Section
+  const quizData = [
+    {
+      question: "What is the meaning of 'Hola'?",
+      options: ["Goodbye", "Hello", "Please", "Night"],
+      answer: "Hello"
+    },
+    {
+      question: "What is the meaning of 'Gracias'?",
+      options: ["Sorry", "Morning", "Thank You", "Friend"],
+      answer: "Thank You"
+    }
+  ];
+
+  let quizIndex = 0;
+  let score = 0;
+
+  function loadQuiz(){
+
+    let currentQuiz = quizData[quizIndex];
+
+    document.getElementById("quizQuestion").innerText =
+      currentQuiz.question;
+
+    let optionsHTML = "";
+
+    currentQuiz.options.forEach(option => {
+
+      optionsHTML += `
+        <button class="option"
+          onclick="checkAnswer('${option}')">
+          ${option}
+        </button>
+      `;
+    });
+
+    document.getElementById("quizOptions").innerHTML =
+      optionsHTML;
+
+    updateProgress();
+  }
+
+  function checkAnswer(selected){
+
+    if(selected === quizData[quizIndex].answer){
+
+      score++;
+
+      document.getElementById("score").innerText =
+        "Correct Answer!";
+    }
+    else{
+
+      document.getElementById("score").innerText =
+        "Wrong Answer!";
+    }
+
+    quizIndex++;
+
+    if(quizIndex < quizData.length){
+
+      setTimeout(() => {
+        loadQuiz();
+      }, 800);
+
+    }else{
+
+      document.getElementById("quizQuestion").innerText =
+        "Quiz Completed";
+
+      document.getElementById("quizOptions").innerHTML = "";
+
+      document.getElementById("score").innerText =
+        "Final Score: " + score + "/" + quizData.length;
+
+      document.getElementById("progress").style.width =
+        "100%";
+    }
+  }
+
+  function updateProgress(){
+
+    let progress =
+      ((quizIndex) / quizData.length) * 100;
+
+    document.getElementById("progress").style.width =
+      progress + "%";
+  }
+
+  // Local Storage Save Example
+  localStorage.setItem(
+    "languageProgress",
+    JSON.stringify({
+      completedQuiz: quizIndex,
+      score: score
+    })
+  );
+
+  displayCard();
+  loadQuiz();
+
+</script>
+
+</body>
+</html>
